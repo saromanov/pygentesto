@@ -38,7 +38,7 @@ class GenTests:
 
 	def _getNames(self, pattern):
 		f = self._readFile(self.fname)
-		store = Store()
+		store = Store(self.fname)
 		self.searchClasses(f)
 		startposclass = 99999999
 		for i in f:
@@ -96,10 +96,11 @@ class GenTests:
 
 
 class Store:
-	def __init__(self):
+	def __init__(self,path):
 		self.class_names=[]
 		self.method_names=[]
 		self.values = {}
+		self.path = path.split('.')[0]
 
 	def appendClass(self, classname):
 		self.class_names.append(classname[1])
@@ -118,4 +119,5 @@ class Store:
 		return self.values
 
 	def getMethods(self):
-		return self.method_names
+		return {self.path: self.method_names}
+
