@@ -25,6 +25,7 @@ def parseArguments():
 		help='Parse .py file and create tests')
 	parser.add_argument('--tdd', dest='tdd', nargs='+',
 		help='Create .py files after definition of tests')
+	parser.add_argument('--diff-files', help='Store each сlass for different file')
 	args = parser.parse_args()
 	if args.tdd != None:
 		runTDD(args.tdd)

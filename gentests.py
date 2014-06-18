@@ -14,6 +14,7 @@ Algorithm
 TODO:
 1. docstring
 2. ddt
+3. Fix bug with check def and class in comments
 '''
 
 class GenTests:
@@ -31,29 +32,48 @@ class GenTests:
 	def _getClassNames(self):
 		return self._getNames('class \w+')
 
+	def _readFile(self, path):
+		assert(os.path.isfile(path))
+		return open(self.fname, 'r').readlines()
+
 	def _getNames(self, pattern):
-		class_names = []
-		method_names = []
-		values = {}
-		assert(os.path.isfile(self.fname))
-		f = open(self.fname, 'r').readlines()
+		f = self._readFile(self.fname)
+		store = Store()
+		self.searchClasses(f)
+		startposclass = 99999999
 		for i in f:
 			data = re.search(pattern,i)
 			if data != None:
+				startposclass = len(i)
 				result = data.group(0).split()
-				class_names.append(result[1])
-				if result[1] not in values:
-					values[result[1]] = []
+				store.appendClass(result)
 			data2 = re.search('def \w+', i)
 			if data2 != None:
-				result = data2.group(0).split()
-				method_names.append(result[1])
-				if class_names[-1] in values:
-					values[class_names[-1]].append(result[1])
+				'''Check distance between class(c) name and def(d) function
+				if c > d then dеf is method of c
+				otherwise is a function which not contaon in c
+				'''
+				if startposclass < len(i):
+					result = data2.group(0).split()
+					store.appendMethodToClass(result)
+				else:
+					result = data2.group(0).split()
+					store.appendMethod(result)
 		newDict = {}
-		for keys in values.keys():
-			newDict[keys] = self._filterNames(values[keys])
-		return newDict
+		values = store.getValues()
+		if len(values) > 0:
+			for keys in values.keys():
+				newDict[keys] = self._filterNames(values[keys])
+			return newDict
+		else:
+			return store.getMethods()
+
+	def searchClasses(self, data):
+		'''
+			If file not contain any class, construct
+			only with function with filename as testcase class
+		'''
+		pass
 
 	#Filter method names
 	def _filterNames(self, names):
@@ -72,3 +92,30 @@ class GenTests:
 
 	def result(self):
 		return self._getClassNames()
+
+
+
+class Store:
+	def __init__(self):
+		self.class_names=[]
+		self.method_names=[]
+		self.values = {}
+
+	def appendClass(self, classname):
+		self.class_names.append(classname[1])
+		if classname[1] not in self.values:
+			self.values[classname[1]] = []
+
+	def appendMethod(self, methodname):
+		self.method_names.append(methodname[1])
+
+	def appendMethodToClass(self, methodname):
+		self.method_names.append(methodname[1])
+		if self.class_names[-1] in self.values:
+			self.values[self.class_names[-1]].append(methodname[1])
+
+	def getValues(self):
+		return self.values
+
+	def getMethods(self):
+		return self.method_names
