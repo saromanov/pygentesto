@@ -3,16 +3,31 @@ class ConstructUnitTests:
 		self.data = classes
 		self.result = ''
 		self.result += 'import unittest\n'
-		self._writeData()
+		self.params={}
 
+	def add_class_for_each_method(self):
+		self.params['cfem'] = '\t{0} = {1}()\n'
+
+	def add_class_for_each_ut(self):
+		'''
+			Append class initialization for each unit test class
+		'''
+		self.params['cfeu'] = '\t{0} = {1}()\n'
+
+	def _appendData(self, key, *data):
+		if key in self.params:
+			return self.params[key].format(*data)
 	def _writeData(self):
 		for cls in self.data.keys():
-			self.result += 'class {0}(unittest.TestCase):\n'.format(cls)
+			self.result += 'class Test{0}(unittest.TestCase):\n'.format(cls)
+			self.result += self._appendData('cfeu', cls[0], cls)
+			'''if self.cfeu:
+				self.result += '\t{0} = {1}()\n'.format(cls[0].lower(), cls)'''
 			for method in self.data[cls]:
 				self.result += '\tdef test_{0}(self):\n\t\tpass\n'.format(method)
 
 	def output(self, outputfile):
-		ct = ConstructUnitTests(self.data)
+		self._writeData()
 		f = open(outputfile, 'w')
 		f.write(self.result)
 

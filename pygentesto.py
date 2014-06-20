@@ -6,9 +6,9 @@ import argparse
 def inpotp(path):
 	return path[0], path[1]
 
-def runGentests(path):
+def runGentests(path,*args,**kwargs):
 	inpfile, outfile = inpotp(path)
-	gen = gentests.GenTests(inpfile)
+	gen = gentests.GenTests(inpfile, args)
 	gen.output(outfile)
 
 def runTDD(path):
@@ -24,11 +24,15 @@ def parseArguments():
 	parser.add_argument('--tdd', dest='tdd', nargs='+',
 		help='Create .py files after definition of tests')
 	parser.add_argument('--diff-files', help='Store each сlass for different file')
+	parser.add_argument('--ci', dest='ci', help='class init for each test case', 
+		const='ci', action='store_const')
+	parser.add_argument('--cim', dest='cim', help='class init for each method',
+		const='cim', action='store_const')
 	args = parser.parse_args()
 	if args.tdd != None:
 		runTDD(args.tdd)
 	if args.gentests != None:
-		runGentests(args.gentests)
+		runGentests(args.gentests, args.ci, args.cim)
 
 
 

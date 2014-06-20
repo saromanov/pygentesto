@@ -1,6 +1,7 @@
 import inspect
 import os.path
 import re
+from genoutput import ConstructUnitTests
 
 
 '''
@@ -26,6 +27,12 @@ class GenTests:
 	def __init__(self, fname, *args, **kwargs):
 		self.fname = fname
 		self.closed_methods = kwargs.get('closed', False)
+		self.classinit_store = False
+		self.classinit_method = False
+		if 'ci' in args[0]:
+			self.classinit_store = True
+		if 'cli' in args[0]:
+			self.classinit_method = True
 		#Classes like a dictionary
 		#self.classes=self._getClassNames()
 
@@ -90,8 +97,16 @@ class GenTests:
 	def _checkfile(self):
 		pass
 
-	def result(self):
+	def _result(self):
 		return self._getClassNames()
+
+	def output(self, path):
+		c = ConstructUnitTests(self._result())
+		if self.classinit_store:
+			c.add_class_for_each_ut()
+		if self.classinit_method:
+			c.add_class_for_each_method()
+		return c.output(path)
 
 
 
