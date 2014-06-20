@@ -44,3 +44,4 @@ class ConstructPyFile:
 			class_string = 'class {0}(unittest.TestCase):\n'
 			method_string = '\tdef test_{0}(self):\n\t\tpass\n'
 		return class_string, method_string
+

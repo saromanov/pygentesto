@@ -1,6 +1,5 @@
 import gentests
 import tdd
-from genoutput import ConstructUnitTests
 
 import argparse
 
@@ -10,8 +9,7 @@ def inpotp(path):
 def runGentests(path):
 	inpfile, outfile = inpotp(path)
 	gen = gentests.GenTests(inpfile)
-	c = ConstructUnitTests(gen.result())
-	c.output(outfile)
+	gen.output(outfile)
 
 def runTDD(path):
 	inpfile, outfile = inpotp(path)
