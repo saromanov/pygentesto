@@ -20,11 +20,11 @@ class ConstructUnitTests:
 	def _writeData(self):
 		for cls in self.data.keys():
 			self.result += 'class Test{0}(unittest.TestCase):\n'.format(cls)
-			self.result += self._appendData('cfeu', cls[0], cls)
+			#self.result += self._appendData('cfeu', cls[0], cls)
 			'''if self.cfeu:
 				self.result += '\t{0} = {1}()\n'.format(cls[0].lower(), cls)'''
 			for method in self.data[cls]:
-				self.result += '\tdef test_{0}(self):\n\t\tpass\n'.format(method)
+				self.result += '\tdef test_{0}(self):\n\t\tpass\n\n\n\n'.format(method)
 
 	def output(self, outputfile):
 		self._writeData()

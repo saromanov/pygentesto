@@ -25,25 +25,26 @@ class GenTests:
 	What about private methods?
 	'''
 	def __init__(self, fname, *args, **kwargs):
+
+		#Filename or filenames
 		self.fname = fname
 		self.closed_methods = kwargs.get('closed', False)
-		self.classinit_store = False
-		self.classinit_method = False
-		if 'ci' in args[0]:
-			self.classinit_store = True
-		if 'cli' in args[0]:
-			self.classinit_method = True
+		self.classinit_store = kwargs.get('classinit', True)
+		self.classinit_method = kwargs.get('classmethod', False)
 		#Classes like a dictionary
 		#self.classes=self._getClassNames()
 
 	def _getClassNames(self):
-		return self._getNames('class \w+')
+		return self._getNames('^class \w+')
 
 	def _readFile(self, path):
 		assert(os.path.isfile(path))
 		return open(self.fname, 'r').readlines()
 
 	def _getNames(self, pattern):
+		'''
+			Get classes and functions
+		'''
 		f = self._readFile(self.fname)
 		store = Store(self.fname)
 		self.searchClasses(f)
@@ -98,6 +99,7 @@ class GenTests:
 		pass
 
 	def _result(self):
+		classes = self._getClassNames()
 		return self._getClassNames()
 
 	def output(self, path):

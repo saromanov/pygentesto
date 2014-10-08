@@ -3,13 +3,18 @@ import tdd
 
 import argparse
 
-def inpotp(path):
-	return path[0], path[1]
 
-def runGentests(path,*args,**kwargs):
-	inpfile, outfile = inpotp(path)
-	gen = gentests.GenTests(inpfile, args)
+def runGentests(path,outfile):
+
+	gen = gentests.GenTests(path[0])
 	gen.output(outfile)
+
+def runGenTestsMany(paths):
+	'''
+		Construct unittest file/files
+		from several .py files
+	'''
+	pass
 
 def runTDD(path):
 	inpfile, outfile = inpotp(path)
@@ -17,6 +22,7 @@ def runTDD(path):
 	t.parse(inpfile)
 	t.output(outfile)
 
+#python3.3 pygentesto.py  -g pygentesto.py --output value.py
 def parseArguments():
 	parser = argparse.ArgumentParser(description="Some parser")
 	parser.add_argument('-g', dest="gentests", action='store', nargs='+', 
@@ -28,11 +34,13 @@ def parseArguments():
 		const='ci', action='store_const')
 	parser.add_argument('--cim', dest='cim', help='class init for each method',
 		const='cim', action='store_const')
+	parser.add_argument('--output', nargs='?', help='set output file')
 	args = parser.parse_args()
 	if args.tdd != None:
 		runTDD(args.tdd)
 	if args.gentests != None:
-		runGentests(args.gentests, args.ci, args.cim)
+		#print("THIS IS ARGS: ", args.gentests, args.output)
+		runGentests(args.gentests, args.output)
 
 
 
