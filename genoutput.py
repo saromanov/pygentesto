@@ -8,6 +8,9 @@ class ConstructUnitTests:
 	def add_class_for_each_method(self):
 		self.params['cfem'] = '\t{0} = {1}()\n'
 
+	def add_comment_for_method(self, comment):
+		pass
+
 	def add_class_for_each_ut(self):
 		'''
 			Append class initialization for each unit test class
@@ -17,6 +20,13 @@ class ConstructUnitTests:
 	def _appendData(self, key, *data):
 		if key in self.params:
 			return self.params[key].format(*data)
+
+	def _repeatFunc(self, data, times=1):
+		#if times == 1:
+		#	return '\tdef test_{0}(self):\n\t\tpass\n\n\n\n'.format(method)
+		for step in range(times):
+			for method in data:
+				self.result += '\tdef test_{0}_{1}(self):\n\t\tpass\n\n\n\n'.format(method, step)
 	def _writeData(self):
 		for cls in self.data.keys():
 			self.result += 'class Test{0}(unittest.TestCase):\n'.format(cls)

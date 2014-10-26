@@ -22,29 +22,41 @@ class GenTests:
 	'''
 	GenTests('filename')
 
-	What about private methods?
 	'''
-	def __init__(self, fname, *args, **kwargs):
+	def __init__(self, fname=__file__, *args, **kwargs):
 
 		#Filename or filenames
 		self.fname = fname
 		self.closed_methods = kwargs.get('closed', False)
 		self.classinit_store = kwargs.get('classinit', True)
 		self.classinit_method = kwargs.get('classmethod', False)
+
+		#By default - generate tests for all public methods
+		self.genall = kwargs.get('genall', True)
+		if not self.genall:
+			self.methods = {}
 		#Classes like a dictionary
 		#self.classes=self._getClassNames()
 
 	def _getClassNames(self):
+		"""
+			Get all class names in .py file
+			return: list of all class names
+			In case, when file not contain classes - empty list
+		"""
 		return self._getNames('^class \w+')
 
 	def _readFile(self, path):
+		"""
+			Read source file if exist
+		"""
 		assert(os.path.isfile(path))
 		return open(self.fname, 'r').readlines()
 
 	def _getNames(self, pattern):
-		'''
+		"""
 			Get classes and functions
-		'''
+		"""
 		f = self._readFile(self.fname)
 		store = Store(self.fname)
 		self.searchClasses(f)
@@ -70,9 +82,7 @@ class GenTests:
 		newDict = {}
 		values = store.getValues()
 		if len(values) > 0:
-			for keys in values.keys():
-				newDict[keys] = self._filterNames(values[keys])
-			return newDict
+			return {keys: self._filterNames(values[keys]) for keys in values.keys()}
 		else:
 			return store.getMethods()
 
@@ -92,6 +102,24 @@ class GenTests:
 	def parse(self):
 		return self._getNames(pattern)
 
+	def generate(self, methodname):
+		"""
+			Generate test case for method
+			TODO: Need to append comment
+		"""
+		if self.genall == False:
+			if 'TEST1' not in self.methods:
+				self.methods['TEST1'] = [methodname]
+			else:
+				self.methods['TEST1'].append(methodname)
+
+
+	def choosenMethods(self):
+		"""
+			Generate only with choosen methods
+		"""
+		pass
+
 	def _getMethodNames(self):
 		pass
 
@@ -99,8 +127,13 @@ class GenTests:
 		pass
 
 	def _result(self):
-		classes = self._getClassNames()
-		return self._getClassNames()
+		"""
+			Return dict with class names and list of methods
+		"""
+		if self.genall:
+			classes = self._getClassNames()
+			return classes
+		else: return self.methods
 
 	def output(self, path):
 		c = ConstructUnitTests(self._result())
