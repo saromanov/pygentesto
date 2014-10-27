@@ -35,6 +35,7 @@ class GenTests:
 		self.genall = kwargs.get('genall', True)
 		if not self.genall:
 			self.methods = {}
+		self.defaultClass = 'TEST'
 		#Classes like a dictionary
 		#self.classes=self._getClassNames()
 
@@ -57,11 +58,11 @@ class GenTests:
 		"""
 			Get classes and functions
 		"""
-		f = self._readFile(self.fname)
+		data = self._readFile(self.fname)
 		store = Store(self.fname)
-		self.searchClasses(f)
+		self.searchClasses(data)
 		startposclass = 99999999
-		for i in f:
+		for i in data:
 			data = re.search(pattern,i)
 			if data != None:
 				startposclass = len(i)
@@ -102,16 +103,19 @@ class GenTests:
 	def parse(self):
 		return self._getNames(pattern)
 
-	def generate(self, methodname):
+	def generate(self, methodname, comment):
 		"""
 			Generate test case for method
 			TODO: Need to append comment
 		"""
 		if self.genall == False:
-			if 'TEST1' not in self.methods:
-				self.methods['TEST1'] = [methodname]
+			if self.defaultClass not in self.methods:
+				self.methods[self.defaultClass] = [(methodname, comment)]
 			else:
-				self.methods['TEST1'].append(methodname)
+				self.methods[self.defaultClass].append((methodname, comment))
+
+	def addDefaultClass(self, classname):
+		self.defaultClass = classname
 
 
 	def choosenMethods(self):
@@ -141,7 +145,10 @@ class GenTests:
 			c.add_class_for_each_ut()
 		if self.classinit_method:
 			c.add_class_for_each_method()
-		return c.output(path)
+		if self.genall:
+			return c.output(path)
+		else:
+			return c.output2(path)
 
 
 

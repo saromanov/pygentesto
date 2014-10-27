@@ -36,10 +36,28 @@ class ConstructUnitTests:
 			for method in self.data[cls]:
 				self.result += '\tdef test_{0}(self):\n\t\tpass\n\n\n\n'.format(method)
 
-	def output(self, outputfile):
-		self._writeData()
+	def _writeDataWComments(self):
+		for cls in self.data.keys():
+			self.result += 'class Test{0}(unittest.TestCase):\n'.format(cls)
+			#self.result += self._appendData('cfeu', cls[0], cls)
+			'''if self.cfeu:
+				self.result += '\t{0} = {1}()\n'.format(cls[0].lower(), cls)'''
+			for method in self.data[cls]:
+				name, comment = method
+				self.result += '\tdef test_{0}(self):\n\t\t"""{1}"""\n\t\tpass\n\n\n\n'.format(name, comment)
+
+	def _writeFile(self, outputfile):
 		f = open(outputfile, 'w')
 		f.write(self.result)
+
+	def output(self, outputfile):
+		self._writeData()
+		self._writeFile(outputfile)
+
+	def output2(self, outputfile):
+		""" Output with comments """
+		self._writeDataWComments()
+		self._writeFile(outputfile)
 
 
 class ConstructPyFile:

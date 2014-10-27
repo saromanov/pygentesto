@@ -2,6 +2,7 @@ import gentests
 import tdd
 
 import argparse
+import json
 
 
 def runGentests(path,outfile):
@@ -22,11 +23,22 @@ def runTDD(path):
 	t.parse(inpfile)
 	t.output(outfile)
 
+
+def confLoad():
+	'''
+		Load configuration
+		repeatfunc - repeat number of times every function
+	'''
+	data = json.loads(open('conf.json').read())
+	if repeatfunc in data:
+		pass
+
 #python3.3 pygentesto.py  -g pygentesto.py --output value.py
 def parseArguments():
 	parser = argparse.ArgumentParser(description="Some parser")
 	parser.add_argument('-g', dest="gentests", action='store', nargs='+', 
 		help='Parse .py file and create tests')
+	parser.add_argument('--gN', dest="genstetsnum", action='store', nargs='+')
 	parser.add_argument('--tdd', dest='tdd', nargs='+',
 		help='Create .py files after definition of tests')
 	parser.add_argument('--diff-files', help='Store each сlass for different file')
@@ -39,8 +51,13 @@ def parseArguments():
 	if args.tdd != None:
 		runTDD(args.tdd)
 	if args.gentests != None:
-		#print("THIS IS ARGS: ", args.gentests, args.output)
 		runGentests(args.gentests, args.output)
+	if args.genstetsnum != None:
+		"""
+			Set every test num times
+		"""
+		num = int(args.genstetsnum[0])
+		path = args.genstetsnum[1]
 
 
 
