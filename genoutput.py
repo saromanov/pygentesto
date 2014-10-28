@@ -11,6 +11,10 @@ class ConstructUnitTests:
 	def add_comment_for_method(self, comment):
 		pass
 
+	def appendImport(self, filename):
+		""" TODO: Now, import from current path. Check unusual cases"""
+		self.result += 'import {0}\n\n'.format(filename[0:filename.find('.')])
+
 	def add_class_for_each_ut(self):
 		'''
 			Append class initialization for each unit test class
@@ -39,12 +43,12 @@ class ConstructUnitTests:
 	def _writeDataWComments(self):
 		for cls in self.data.keys():
 			self.result += 'class Test{0}(unittest.TestCase):\n'.format(cls)
-			#self.result += self._appendData('cfeu', cls[0], cls)
-			'''if self.cfeu:
-				self.result += '\t{0} = {1}()\n'.format(cls[0].lower(), cls)'''
 			for method in self.data[cls]:
 				name, comment = method
 				self.result += '\tdef test_{0}(self):\n\t\t"""{1}"""\n\t\tpass\n\n\n\n'.format(name, comment)
+
+	def _setMainData(self):
+		self.result += '\n\n\nif __name__ == "__main__":\n\tunitest.main()\n'
 
 	def _writeFile(self, outputfile):
 		f = open(outputfile, 'w')
@@ -52,11 +56,13 @@ class ConstructUnitTests:
 
 	def output(self, outputfile):
 		self._writeData()
+		self._setMainData()
 		self._writeFile(outputfile)
 
 	def output2(self, outputfile):
 		""" Output with comments """
 		self._writeDataWComments()
+		self._setMainData()
 		self._writeFile(outputfile)
 
 
@@ -87,4 +93,3 @@ class ConstructPyFile:
 			class_string = 'class {0}(unittest.TestCase):\n'
 			method_string = '\tdef test_{0}(self):\n\t\tpass\n'
 		return class_string, method_string
-

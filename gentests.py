@@ -139,12 +139,14 @@ class GenTests:
 			return classes
 		else: return self.methods
 
-	def output(self, path):
+	def output(self, path, *args, **kwargs):
 		c = ConstructUnitTests(self._result())
 		if self.classinit_store:
 			c.add_class_for_each_ut()
 		if self.classinit_method:
 			c.add_class_for_each_method()
+		if kwargs.get('imp'):
+			c.appendImport(self.fname)
 		if self.genall:
 			return c.output(path)
 		else:

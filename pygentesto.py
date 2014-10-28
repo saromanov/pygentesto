@@ -5,10 +5,10 @@ import argparse
 import json
 
 
-def runGentests(path,outfile):
+def runGentests(path,outfile,args):
 
 	gen = gentests.GenTests(path[0])
-	gen.output(outfile)
+	gen.output(outfile, imp=args.imp != None)
 
 def runGenTestsMany(paths):
 	'''
@@ -47,11 +47,12 @@ def parseArguments():
 	parser.add_argument('--cim', dest='cim', help='class init for each method',
 		const='cim', action='store_const')
 	parser.add_argument('--output', nargs='?', help='set output file')
+	parser.add_argument('-i', dest='imp', help='import current file')
 	args = parser.parse_args()
 	if args.tdd != None:
 		runTDD(args.tdd)
 	if args.gentests != None:
-		runGentests(args.gentests, args.output)
+		runGentests(args.gentests, args.output, args)
 	if args.genstetsnum != None:
 		"""
 			Set every test num times
