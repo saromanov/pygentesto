@@ -1,9 +1,13 @@
+import functools
+
 class ConstructUnitTests:
 	def __init__(self, classes):
 		self.data = classes
 		self.result = ''
 		self.result += 'import unittest\n'
 		self.params={}
+		if imported != []:
+			self.result += self._setImportData(imported)
 
 	def add_class_for_each_method(self):
 		self.params['cfem'] = '\t{0} = {1}()\n'
@@ -70,11 +74,20 @@ class ConstructPyFile:
 	'''
 	Construct output file
 	'''
-	def __init__(self, path, data):
+	def __init__(self, path, data, imported=[]):
 		self.path = path
 		self.data = data
+		self.result=''
+		if imported != []:
+			self.result += self._setImportData(imported)
+
+	def _setImportData(self, imported):
+		""" Set in file imported values"""
+		imported = list(map(lambda x: x + '\n', imported))
+		return functools.reduce(str.__add__, imported,'')
 
 	def construct(self, istest=False):
+		others = [self.result]
 		result = {}
 		class_string, method_string = self._makeData(istest)
 		for cls in self.data.keys():
@@ -84,7 +97,7 @@ class ConstructPyFile:
 			for method in self.data[cls]:
 				data += method_string.format(method)
 			result[cls] = data
-		return result
+		return others, result
 
 	def _makeData(self, istest=False):
 		class_string = 'class {0}:\n'
