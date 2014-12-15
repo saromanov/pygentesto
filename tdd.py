@@ -2,6 +2,7 @@ import re
 from genoutput import ConstructPyFile
 import os
 from messages import Messages
+import ast
 
 #Write tests and gen classes
 
@@ -16,46 +17,37 @@ class Tdd:
 		self.newclass = newclass
 		self.messages = Messages(ismessages)
 
-	#TODO case when not classes in file
-	def parse(self, filename):
-		""" Parse .py test case file to construct 
-		    another .py file with "clean" classes with function
-		"""
+	def ast_parse(self, filename):
+		""" Parse classes with test cases and functions """
 		if not os.path.isfile(filename):
-			raise Exception("File not exists")
-		#Class and methods
-		params = {}
+			raise Exception("File not found")
+		data = open(filename, 'r').read()
+		tree = ast.parse(data)
+		result = {}
 		imported = []
-		data = open(filename, 'r').readlines()
-		for c in data:
-			importvalue = re.search("import \w+", c)
-			if importvalue != None:
-				imported.append(importvalue.group(0))
-			resultc = re.search("class \w+", c)
-			foundclass=False
-			if resultc != None:
-				clname = resultc.group(0).split('Test')[1]
-				if clname != '':
-					params[clname] = []
-			resultm = re.search("def \w+", c)
-			if resultm != None:
-				checksplit = resultm.group(0).split('test')
-				if len(checksplit) > 1:
-					mlname = resultm.group(0).split('test_')[1]
-					if clname in params and mlname != '':
-						storedfuncs = params[clname]
-						if mlname in storedfuncs:
-							self.messages.output("function {0} already exist in class {1}. Second function will not be generated".\
-								format(mlname, clname))
+		for node in ast.walk(tree):
+			if isinstance(node, ast.ClassDef):
+				result[node.name] = []
+				for subdata in node.body:
+					if isinstance(subdata, ast.FunctionDef):
+						funcs = result[node.name]
+						if subdata.name not in funcs:
+							result[node.name].append(subdata.name)
 						else:
-							params[clname].append(mlname)
-		return imported, params
+							self.messages.output("function {0} already exist in class {1}. Second function will not be generated".\
+								format(subdata.name, node.name))
+					if isinstance(subdata, ast.Expr):
+						print("Something expression", subdata.value.s)
+			if isinstance(node, ast.Import):
+				imported = list(map(lambda x: 'import ' + x.name, node.names))
+		return imported, result
 
 
 	#name - folder for output
 	#newfiles - New file for every class
 	def output(self, targetpath, outpath=None):
-		imported, data = self.parse(targetpath)
+		#imported, data = self.parse(targetpath)
+		imported, data = self.ast_parse(targetpath)
 		otput = ConstructPyFile(outpath, data, imported=imported)
 		result = otput.construct()
 		if result == None:
@@ -63,7 +55,7 @@ class Tdd:
 		if self.newclass:
 			self._alwaysNewFile(result)
 		else:
-			self._monoliticFile(result)
+			self._monoliticFile(result, outpath=outpath)
 
 	#New file for every class
 	def _alwaysNewFile(self, result):
@@ -72,14 +64,17 @@ class Tdd:
 			f.write(result[cls])
 
 	#All class in one file
-	def _monoliticFile(self, value):
+	def _monoliticFile(self, value, outpath=None):
 		data, result = value
-		firstclassname = list(result.keys())[0]
-		f = open(firstclassname.lower() + '.py', 'w')
+		firstclassname = outpath
+		if outpath == None:
+			firstclassname = list(result.keys())[0]
+			firstclassname = firstclassname.lower() + '.py'
+		f = open(firstclassname, 'w')
 		for d in data:
 			f.write(d)
 		for cls in result.keys():
-			f.write(result[cls])
+			f.write(result[cls] + '\n')
 
 class EmptyResultError(Exception):
 	def __init__(self, value):

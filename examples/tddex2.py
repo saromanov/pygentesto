@@ -11,3 +11,14 @@ class TestSettings2(unittest.TestCase):
 	def test_one(self):
 		self.assertEqual(True, True)
 
+
+
+
+class CoolWebService(unittest.TestCase):
+	#Set first initialization
+	def test_init(self):
+		pass
+
+	#Test to load data
+	def test_load(self):
+		pass
