@@ -1,8 +1,10 @@
 import re
-from genoutput import ConstructPyFile
 import os
-from messages import Messages
 import ast
+import json
+
+from messages import Messages
+from genoutput import ConstructPyFile
 
 #Write tests and gen classes
 
@@ -12,9 +14,13 @@ class Tdd:
 	path - 
 	newclass - create new class with every new method
 	messages - output information messages which occurred during process of generation .py file
+	configure - path to configuration json file
 	'''
-	def __init__(self, newclass=False, ismessages=False):
+	def __init__(self, newclass=False, ismessages=False, comments=False, configure=None):
+		if configure != None:
+			pass
 		self.newclass = newclass
+		self.comments = comments
 		self.messages = Messages(ismessages)
 
 	def ast_parse(self, filename):
@@ -25,6 +31,8 @@ class Tdd:
 		tree = ast.parse(data)
 		result = {}
 		imported = []
+		#Create objects for 
+		objects = {}
 		for node in ast.walk(tree):
 			if isinstance(node, ast.ClassDef):
 				result[node.name] = []
@@ -32,15 +40,54 @@ class Tdd:
 					if isinstance(subdata, ast.FunctionDef):
 						funcs = result[node.name]
 						if subdata.name not in funcs:
-							result[node.name].append(subdata.name)
+							cand_func = self._parse_test_function(subdata.name)
+							# if cand_func return None
+							#It is function from unittest
+							if cand_func != None:
+								result[node.name].append(cand_func)
+							else:
+								#In case with one function
+								objects[subdata.body[0].targets[0].attr] = {'name':\
+								subdata.body[0].value.func.id}
 						else:
 							self.messages.output("function {0} already exist in class {1}. Second function will not be generated".\
 								format(subdata.name, node.name))
+						self._parse_inside_function(subdata.body, objects)
 					if isinstance(subdata, ast.Expr):
 						print("Something expression", subdata.value.s)
 			if isinstance(node, ast.Import):
 				imported = list(map(lambda x: 'import ' + x.name, node.names))
+		print(objects, ...)
 		return imported, result
+
+	def _parse_test_function(self, name):
+		""" Parse test function for getting clean name
+			For example: test_one; return one
+		"""
+		if name.startswith('test'):
+			splitter = name.split('_')
+			if splitter[1] =='':
+				self.messages.output("function {0} have a empty name")
+				return 'test'
+			else: return splitter[1]
+
+	def _parse_inside_function(self, funcbody, objects):
+		for body in funcbody:
+			if isinstance(body, ast.Expr):
+				for inner in body.value.args:
+					if isinstance(inner, ast.Call):
+						name = inner.func.value.attr
+						if name in objects:
+							if 'funcs' in objects[name]:
+								objects[name]['funcs'].append(inner.func.attr)
+							else:
+								objects[name].update({'funcs': [inner.func.attr]})
+		return objects
+
+	def append_comments(self, subdata):
+		"Append comments to file"
+		if self.comments:
+			return subdata.value.s
 
 
 	#name - folder for output
