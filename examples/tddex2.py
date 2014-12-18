@@ -29,7 +29,7 @@ class TestCalculator(unittest.TestCase):
 		self.calculator = Calculator()
 
 	def test_multiply(self):
-		self.assertEqual(self.calculator.multiply(7,6), 42)
+		self.assertEqual(self.calculator.multi(7,6), 42)
 
 	def test_added(self):
 		self.assertEqual(self.calculator.add(7,6), 13)

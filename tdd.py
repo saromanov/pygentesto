@@ -14,14 +14,37 @@ class Tdd:
 	path - 
 	newclass - create new class with every new method
 	messages - output information messages which occurred during process of generation .py file
-	configure - path to configuration json file
+	configure - path to configuration of json file
+
+	configure:
+	construct - construct classes from testCase class(with name of class. For example:
+
+	[code]
+	class TestCalculator(unittest.TestCase):
+		def setUp(self):
+			self.calculator = Calculator()
+
+		def test_multiply(self):
+			self.assertEqual(self.calculator.multi(7,6), 42)
+	[/code]
+	In output .py file will be class Calculator with method multi
+
 	'''
-	def __init__(self, newclass=False, ismessages=False, comments=False, configure=None):
+	def __init__(self, newclass=False, ismessages=False, comments=False, configure=None,\
+		construct=None):
+		self.configure = None
 		if configure != None:
-			pass
-		self.newclass = newclass
-		self.comments = comments
-		self.messages = Messages(ismessages)
+			self.configure = self._load_configure(configure)
+		else:
+			self.newclass = newclass
+			self.comments = comments
+			self.messages = Messages(ismessages)
+			self.construct = construct
+
+	def _load_configure(self, path):
+		if path != None:
+			with open(path) as f:
+				return json.loads(f.read())
 
 	def ast_parse(self, filename):
 		""" Parse classes with test cases and functions """
@@ -57,12 +80,16 @@ class Tdd:
 						print("Something expression", subdata.value.s)
 			if isinstance(node, ast.Import):
 				imported = list(map(lambda x: 'import ' + x.name, node.names))
-		print(objects, ...)
-		return imported, result
+		return objects, imported, result
 
 	def _parse_test_function(self, name):
 		""" Parse test function for getting clean name
 			For example: test_one; return one
+
+			return:
+			objects - found objects in TestCase class
+			imported - imported modeuls(need to move to objects)
+			data - parse data from ast tree
 		"""
 		if name.startswith('test'):
 			splitter = name.split('_')
@@ -94,21 +121,35 @@ class Tdd:
 	#newfiles - New file for every class
 	def output(self, targetpath, outpath=None):
 		#imported, data = self.parse(targetpath)
-		imported, data = self.ast_parse(targetpath)
-		otput = ConstructPyFile(outpath, data, imported=imported)
-		result = otput.construct()
-		if result == None:
-			raise EmptyResultError("Result not contain any output")
-		if self.newclass:
-			self._alwaysNewFile(result)
+		objects, imported, data = self.ast_parse(targetpath)
+		if self.construct:
+			self._constructObjects(objects, outpath)
 		else:
-			self._monoliticFile(result, outpath=outpath)
+			otput = ConstructPyFile(outpath, data, imported=imported)
+			result = otput.construct()
+			if result == None:
+				raise EmptyResultError("Result not contain any output")
+			if self.newclass:
+				self._alwaysNewFile(result)
+			else:
+				self._monoliticFile(result, outpath=outpath)
 
 	#New file for every class
 	def _alwaysNewFile(self, result):
 		for cls in result.keys():
 			f = open(cls.lower() + '.py', 'w')
 			f.write(result[cls])
+
+	def _constructObjects(self, objects, path):
+		if objects == None:
+			self.messages.output("objects from TestCase class not found")
+			return
+		for obj in objects.keys():
+			construct = objects[obj]
+			transform = {construct['name']: construct['funcs']}
+			imported, output = ConstructPyFile(path, transform).construct()
+			self._writeData(output, path)
+			#print(output, ...)
 
 	#All class in one file
 	def _monoliticFile(self, value, outpath=None):
@@ -120,8 +161,17 @@ class Tdd:
 		f = open(firstclassname, 'w')
 		for d in data:
 			f.write(d)
-		for cls in result.keys():
-			f.write(result[cls] + '\n')
+		f.close()
+		self._writeData(result, outpath)
+
+	def _writeData(self, result, path):
+		"""
+			result - object with map format to write in .py file
+		"""
+		f = open(path, 'w')
+		[f.write(result[cls] + '\n') for cls in result.keys()]
+		f.close()
+
 
 class EmptyResultError(Exception):
 	def __init__(self, value):

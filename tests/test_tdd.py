@@ -13,7 +13,7 @@ def test_tdd2():
 	tdd.output('../examples/tddex2.py', outpath='day1.py')
 
 def test_tdd3():
-	tdd = Tdd(comments=False)
+	tdd = Tdd(comments=False, construct=True)
 	tdd.output('../examples/tddex2.py', outpath='day1.py')
 
-test_tdd2()
+test_tdd3()
