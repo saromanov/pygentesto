@@ -1,6 +1,8 @@
 import unittest
+import os
+import numpy
 
-'''class TestSettings2(unittest.TestCase):
+class TestSettings2(unittest.TestCase):
 	"""
 		Test case with two identical functions
 		Should generate one function with warning message
@@ -21,7 +23,7 @@ class CoolWebService(unittest.TestCase):
 
 	#Test to load data
 	def test_load(self):
-		pass'''
+		pass
 
 
 class TestCalculator(unittest.TestCase):
@@ -33,3 +35,7 @@ class TestCalculator(unittest.TestCase):
 
 	def test_added(self):
 		self.assertEqual(self.calculator.add(7,6), 13)
+
+
+if __name__ == '__main__':
+	unittest.main()

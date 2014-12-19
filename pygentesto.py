@@ -18,10 +18,13 @@ def runGenTestsMany(paths):
 	pass
 
 def runTDD(path):
-	inpfile, outfile = inpotp(path)
-	t = tdd.TDD()
-	t.parse(inpfile)
-	t.output(outfile)
+	#inpfile, outfile = inpotp(path)
+	if len(path) == 2:
+		""" 
+			In case with inpath and outpath
+		"""
+		t = tdd.Tdd()
+		t.output(path[0], outpath=path[1])
 
 
 def confLoad():
@@ -48,6 +51,12 @@ def parseArguments():
 		const='cim', action='store_const')
 	parser.add_argument('--output', nargs='?', help='set output file')
 	parser.add_argument('-i', dest='imp', help='import current file')
+
+	#tdd keys
+	parser.add_argument('--construct', dest='construct', nargs='+',
+		help='Construct methods from TestCase class')
+	parser.add_argument('--configure', dest='configure', nargs='+',
+		help='Load all configuration from json file. Not need to use commad line keys')
 	args = parser.parse_args()
 	if args.tdd != None:
 		runTDD(args.tdd)

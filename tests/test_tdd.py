@@ -13,7 +13,12 @@ def test_tdd2():
 	tdd.output('../examples/tddex2.py', outpath='day1.py')
 
 def test_tdd3():
-	tdd = Tdd(comments=False, construct=True)
+	tdd = Tdd(comments=False)
 	tdd.output('../examples/tddex2.py', outpath='day1.py')
 
-test_tdd3()
+def test_ident_class_names():
+	tdd = Tdd(ismessages=True)
+	tdd.output('../examples/tddex3.py', outpath='day2.py')
+
+#test_tdd3()
+test_ident_class_names()

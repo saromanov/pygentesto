@@ -5,6 +5,7 @@ import json
 
 from messages import Messages
 from genoutput import ConstructPyFile
+from util import TddOutput, ErrorOutput
 
 #Write tests and gen classes
 
@@ -29,12 +30,15 @@ class Tdd:
 	[/code]
 	In output .py file will be class Calculator with method multi
 
+	Configuration can be for all classes or methdos and individual configuration
+
 	'''
 	def __init__(self, newclass=False, ismessages=False, comments=False, configure=None,\
 		construct=None):
 		self.configure = None
 		if configure != None:
 			self.configure = self._load_configure(configure)
+			print("THIS IS CONFIGURE: ", self.configure)
 		else:
 			self.newclass = newclass
 			self.comments = comments
@@ -50,6 +54,7 @@ class Tdd:
 		""" Parse classes with test cases and functions """
 		if not os.path.isfile(filename):
 			raise Exception("File not found")
+		validmethdos = ['setUp']
 		data = open(filename, 'r').read()
 		tree = ast.parse(data)
 		result = {}
@@ -58,29 +63,41 @@ class Tdd:
 		objects = {}
 		for node in ast.walk(tree):
 			if isinstance(node, ast.ClassDef):
+				#If function with same name exist - report the message
+				self._check_exist_function(node.name, result)
 				result[node.name] = []
 				for subdata in node.body:
 					if isinstance(subdata, ast.FunctionDef):
 						funcs = result[node.name]
+
+						#If function name not in fucs store with known functions
 						if subdata.name not in funcs:
 							cand_func = self._parse_test_function(subdata.name)
-							# if cand_func return None
+							#if cand_func return None
 							#It is function from unittest
 							if cand_func != None:
 								result[node.name].append(cand_func)
-							else:
+							elif isinstance(subdata, ast.Assign):
 								#In case with one function
 								objects[subdata.body[0].targets[0].attr] = {'name':\
 								subdata.body[0].value.func.id}
+							elif subdata.name not in validmethdos:
+								self.messages.error("During process of generation file, found error. Not valid TestCase file. method names should looks like test_name.",1)
+								return 
 						else:
-							self.messages.output("function {0} already exist in class {1}. Second function will not be generated".\
+							self.messages.output("function {0} already exist in class {1}. Second function will not be generated.".\
 								format(subdata.name, node.name))
 						self._parse_inside_function(subdata.body, objects)
 					if isinstance(subdata, ast.Expr):
 						print("Something expression", subdata.value.s)
 			if isinstance(node, ast.Import):
-				imported = list(map(lambda x: 'import ' + x.name, node.names))
-		return objects, imported, result
+				imported += list(map(lambda x: 'import ' + x.name, node.names))
+		return TddOutput(objects, imported, result)
+
+	def _check_exist_function(self, funcname, store):
+		if funcname in store:
+			self.messages.output("function {0} already exist in store. New function with same name will be overwritten".\
+				format(funcname))
 
 	def _parse_test_function(self, name):
 		""" Parse test function for getting clean name
@@ -121,7 +138,12 @@ class Tdd:
 	#newfiles - New file for every class
 	def output(self, targetpath, outpath=None):
 		#imported, data = self.parse(targetpath)
-		objects, imported, data = self.ast_parse(targetpath)
+		result = self.ast_parse(targetpath)
+		if not isinstance(result, TddOutput):
+			return 
+		objects = result.objects
+		imported = result.imported
+		data = result.data
 		if self.construct:
 			self._constructObjects(objects, outpath)
 		else:
@@ -149,7 +171,6 @@ class Tdd:
 			transform = {construct['name']: construct['funcs']}
 			imported, output = ConstructPyFile(path, transform).construct()
 			self._writeData(output, path)
-			#print(output, ...)
 
 	#All class in one file
 	def _monoliticFile(self, value, outpath=None):
@@ -158,17 +179,20 @@ class Tdd:
 		if outpath == None:
 			firstclassname = list(result.keys())[0]
 			firstclassname = firstclassname.lower() + '.py'
-		f = open(firstclassname, 'w')
+		if(os.path.isfile(firstclassname)):
+			f = open(firstclassname, 'w')
+		else:
+			f = open(firstclassname, 'a')
 		for d in data:
 			f.write(d)
 		f.close()
-		self._writeData(result, outpath)
+		self._writeData(result, firstclassname)
 
 	def _writeData(self, result, path):
 		"""
 			result - object with map format to write in .py file
 		"""
-		f = open(path, 'w')
+		f = open(path, 'a')
 		[f.write(result[cls] + '\n') for cls in result.keys()]
 		f.close()
 
