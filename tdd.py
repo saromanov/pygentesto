@@ -38,7 +38,6 @@ class Tdd:
 		self.configure = None
 		if configure != None:
 			self.configure = self._load_configure(configure)
-			print("THIS IS CONFIGURE: ", self.configure)
 		else:
 			self.newclass = newclass
 			self.comments = comments
@@ -83,11 +82,15 @@ class Tdd:
 								subdata.body[0].value.func.id}
 							elif subdata.name not in validmethdos:
 								self.messages.error("During process of generation file, found error. Not valid TestCase file. method names should looks like test_name.",1)
-								return 
+								return ErrorOutput("Some error")
 						else:
 							self.messages.output("function {0} already exist in class {1}. Second function will not be generated.".\
 								format(subdata.name, node.name))
-						self._parse_inside_function(subdata.body, objects)
+						'''
+							Parsing inside function to get expressions for create 
+							classes and methods In the generated file
+						'''
+						objects.update(self._parse_inside_function(subdata.body, objects))
 					if isinstance(subdata, ast.Expr):
 						print("Something expression", subdata.value.s)
 			if isinstance(node, ast.Import):
@@ -109,23 +112,38 @@ class Tdd:
 			data - parse data from ast tree
 		"""
 		if name.startswith('test'):
-			splitter = name.split('_')
+			splitter = name.split('test')[1][1:]
 			if splitter[1] =='':
 				self.messages.output("function {0} have a empty name")
 				return 'test'
-			else: return splitter[1]
+			else: return splitter
 
 	def _parse_inside_function(self, funcbody, objects):
 		for body in funcbody:
 			if isinstance(body, ast.Expr):
 				for inner in body.value.args:
 					if isinstance(inner, ast.Call):
-						name = inner.func.value.attr
-						if name in objects:
-							if 'funcs' in objects[name]:
-								objects[name]['funcs'].append(inner.func.attr)
-							else:
-								objects[name].update({'funcs': [inner.func.attr]})
+						if isinstance(inner.func, ast.Attribute):
+							name = inner.func.value.attr
+							#Количество аргументов для функции
+							number_of_args = len(inner.args)
+							objects.update(self._update_arguments(name, inner.func.attr, 'funcs', objects))
+						if isinstance(inner.func, ast.Name):
+							""" Case, where we have only function, without declaration in class
+								For example: self.assertEqual(compute(5,10), 15)
+							"""
+							objects.update(self._update_arguments(' ', inner.func.id, 'funcs', objects))
+							#print(inner.func.body)
+		return objects
+
+	def _update_arguments(self, name, data, param, objects):
+		if name in objects:
+			if param in objects[name]:
+				objects[name][param].append(data)
+			else:
+				objects[name].update({param: [data]})
+		else:
+			objects[name] = {'name': name, param:[data]}
 		return objects
 
 	def append_comments(self, subdata):
@@ -145,6 +163,7 @@ class Tdd:
 		imported = result.imported
 		data = result.data
 		if self.construct:
+			#TODO: append number arguments of function
 			self._constructObjects(objects, outpath)
 		else:
 			otput = ConstructPyFile(outpath, data, imported=imported)
