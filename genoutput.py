@@ -106,3 +106,9 @@ class ConstructPyFile:
 			class_string = 'class {0}(unittest.TestCase):\n'
 			method_string = '\tdef test_{0}(self):\n\t\tpass\n'
 		return class_string, method_string
+
+	def gen_arguments(self, num):
+		""" num - number of arguments for target function
+		"""
+		if num > 0 && num < 20:
+			return list(map(lambda x: chr(x), range(ord('a'), ord('a')+2)))

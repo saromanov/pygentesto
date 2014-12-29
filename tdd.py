@@ -68,7 +68,6 @@ class Tdd:
 				for subdata in node.body:
 					if isinstance(subdata, ast.FunctionDef):
 						funcs = result[node.name]
-
 						#If function name not in fucs store with known functions
 						if subdata.name not in funcs:
 							cand_func = self._parse_test_function(subdata.name)
@@ -92,7 +91,7 @@ class Tdd:
 						'''
 						objects.update(self._parse_inside_function(subdata.body, objects))
 					if isinstance(subdata, ast.Expr):
-						print("Something expression", subdata.value.s)
+						print("Some expression", subdata.value.s)
 			if isinstance(node, ast.Import):
 				imported += list(map(lambda x: 'import ' + x.name, node.names))
 		return TddOutput(objects, imported, result)
@@ -127,16 +126,17 @@ class Tdd:
 							name = inner.func.value.attr
 							#Количество аргументов для функции
 							number_of_args = len(inner.args)
-							objects.update(self._update_arguments(name, inner.func.attr, 'funcs', objects))
+							funcobj = FunctionObject(inner.func.attr, number_of_args)
+							objects.update(self._update_arguments(name, funcobj, 'funcs', objects))
 						if isinstance(inner.func, ast.Name):
 							""" Case, where we have only function, without declaration in class
 								For example: self.assertEqual(compute(5,10), 15)
 							"""
 							objects.update(self._update_arguments(' ', inner.func.id, 'funcs', objects))
-							#print(inner.func.body)
 		return objects
 
 	def _update_arguments(self, name, data, param, objects):
+		""" Update arguments for objects """
 		if name in objects:
 			if param in objects[name]:
 				objects[name][param].append(data)
@@ -198,20 +198,26 @@ class Tdd:
 		if outpath == None:
 			firstclassname = list(result.keys())[0]
 			firstclassname = firstclassname.lower() + '.py'
-		if(os.path.isfile(firstclassname)):
-			f = open(firstclassname, 'w')
-		else:
-			f = open(firstclassname, 'a')
+		f = self._openFile(firstclassname)
 		for d in data:
 			f.write(d)
 		f.close()
 		self._writeData(result, firstclassname)
 
+	def _openFile(self, path):
+		""" Check if file exist
+			Return his descriptior
+		"""
+		mode = 'a'
+		if(os.path.isfile(path)):
+			mode = 'w'
+		return open(path, mode)
+
 	def _writeData(self, result, path):
 		"""
 			result - object with map format to write in .py file
 		"""
-		f = open(path, 'a')
+		f = self._openFile(path)
 		[f.write(result[cls] + '\n') for cls in result.keys()]
 		f.close()
 
@@ -221,3 +227,15 @@ class EmptyResultError(Exception):
 		self.value = value
 	def __str__(self):
 		return repr(self.value)
+
+
+class FunctionObject:
+	""" Object from TestCase class
+	"""
+	def __init__(self, name, num_args):
+		""" 
+			name - Name of function
+			num_args - number of arguments
+		"""
+		self.name = name
+		self.num_args = num_args
