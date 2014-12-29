@@ -95,20 +95,28 @@ class ConstructPyFile:
 			data += class_string.format(cls)
 			result[cls] = ''
 			for method in self.data[cls]:
-				data += method_string.format(method)
+				if type(method) != str:
+					data += method_string.format(method.name, self._gen_arguments(method.num_args))
+				else:
+					data += method_string.format(method,self._gen_arguments(0))
 			result[cls] = data
 		return others, result
 
 	def _makeData(self, istest=False):
 		class_string = 'class {0}:\n'
-		method_string = '\tdef {0}(self):\n\t\tpass\n'
+		method_string = '\tdef {0}{1}:\n\t\tpass\n'
 		if istest:
 			class_string = 'class {0}(unittest.TestCase):\n'
-			method_string = '\tdef test_{0}(self):\n\t\tpass\n'
+			method_string = '\tdef test_{0}{1}:\n\t\tpass\n'
 		return class_string, method_string
 
-	def gen_arguments(self, num):
+	def _gen_arguments(self, num):
 		""" num - number of arguments for target function
 		"""
-		if num > 0 && num < 20:
-			return list(map(lambda x: chr(x), range(ord('a'), ord('a')+2)))
+		if num < 20:
+			values = list(map(lambda x: chr(x), range(ord('a'), ord('a')+num)))
+			args = '(self, '
+			for value in values:
+				args += '{0}, '.format(value)
+			args = args[0:-2]
+			return args + ')'
