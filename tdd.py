@@ -68,8 +68,11 @@ class Tdd:
 				for subdata in node.body:
 					if isinstance(subdata, ast.FunctionDef):
 						funcs = result[node.name]
+						parse_result, checker = self._parse_inside_function(subdata.body, objects)
+						if parse_result != None:
+							objects.update(parse_result)
 						#If function name not in fucs store with known functions
-						if subdata.name not in funcs:
+						if subdata.name not in funcs and checker == 0:
 							cand_func = self._parse_test_function(subdata.name)
 							#if cand_func return None
 							#It is function from unittest
@@ -89,7 +92,6 @@ class Tdd:
 							Parsing inside function to get expressions for create 
 							classes and methods In the generated file
 						'''
-						objects.update(self._parse_inside_function(subdata.body, objects))
 					if isinstance(subdata, ast.Expr):
 						print("Some expression", subdata.value.s)
 			if isinstance(node, ast.Import):
@@ -118,6 +120,7 @@ class Tdd:
 			else: return splitter
 
 	def _parse_inside_function(self, funcbody, objects):
+		checker =0
 		for body in funcbody:
 			if isinstance(body, ast.Expr):
 				for inner in body.value.args:
@@ -128,12 +131,14 @@ class Tdd:
 							number_of_args = len(inner.args)
 							funcobj = FunctionObject(inner.func.attr, number_of_args)
 							objects.update(self._update_arguments(name, funcobj, 'funcs', objects))
+							checker += 1
 						if isinstance(inner.func, ast.Name):
 							""" Case, where we have only function, without declaration in class
 								For example: self.assertEqual(compute(5,10), 15)
 							"""
 							objects.update(self._update_arguments(' ', inner.func.id, 'funcs', objects))
-		return objects
+							checker += 1
+		return objects, checker
 
 	def _update_arguments(self, name, data, param, objects):
 		""" Update arguments for objects """
@@ -161,10 +166,10 @@ class Tdd:
 			return 
 		objects = result.objects
 		imported = result.imported
-		data = result.data
+		data = {k:result.data[k] for k in result.data.keys() if result.data[k] != []}
 		if self.construct:
 			#TODO: append number arguments of function
-			self._constructObjects(objects, outpath)
+			self._constructObjects(objects, data, outpath)
 		else:
 			otput = ConstructPyFile(outpath, data, imported=imported)
 			result = otput.construct()
@@ -181,7 +186,7 @@ class Tdd:
 			f = open(cls.lower() + '.py', 'w')
 			f.write(result[cls])
 
-	def _constructObjects(self, objects, path):
+	def _constructObjects(self, objects, data, path):
 		if objects == None:
 			self.messages.output("objects from TestCase class not found")
 			return
@@ -190,26 +195,28 @@ class Tdd:
 			transform = {construct['name']: construct['funcs']}
 			imported, output = ConstructPyFile(path, transform).construct()
 			self._writeData(output, path)
+			otput = ConstructPyFile(path, data, imported=imported)
+			result = otput.construct()
+			#self._monoliticFile(result, path, 'a')
 
 	#All class in one file
-	def _monoliticFile(self, value, outpath=None):
+	def _monoliticFile(self, value, outpath=None, mode='w'):
 		data, result = value
 		firstclassname = outpath
 		if outpath == None:
 			firstclassname = list(result.keys())[0]
 			firstclassname = firstclassname.lower() + '.py'
-		f = self._openFile(firstclassname)
+		f = self._openFile(firstclassname, mode)
 		for d in data:
 			f.write(d)
 		f.close()
 		self._writeData(result, firstclassname)
 
-	def _openFile(self, path):
+	def _openFile(self, path, mode='w'):
 		""" Check if file exist
 			Return his descriptior
 		"""
-		mode = 'a'
-		if(os.path.isfile(path)):
+		if(not os.path.isfile(path)):
 			mode = 'w'
 		return open(path, mode)
 
