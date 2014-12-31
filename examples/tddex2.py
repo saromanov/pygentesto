@@ -2,7 +2,7 @@ import unittest
 import os
 import numpy
 
-'''class TestSettings2(unittest.TestCase):
+class TestSettings2(unittest.TestCase):
 	"""
 		Test case with two identical functions
 		Should generate one function with warning message
@@ -20,17 +20,23 @@ class CoolWebService(unittest.TestCase):
 	#Test to load data
 	def test_load(self):
 		pass
-'''
+
+class TestBitter(unittest.TestCase):
+	def test_first(self):
+		self.assertEqual(1, 2)
+
+	def test_second(self):
+		self.assertEqual(1, 1)
 
 class TestCalculator(unittest.TestCase):
 	def setUp(self):
-		self.calculator = Calculator()
+		self.calc = Calculator()
 
 	def test_multiply(self):
-		self.assertEqual(self.calculator.multi(7,6), 42)
+		self.assertEqual(self.calc.multi(7,6), 42)
 
 	def test_added(self):
-		self.assertEqual(self.calculator.add(7,6), 13)
+		self.assertEqual(self.calc.add(7,6), 13)
 
 def raises_error(*args, **kwds):
     raise ValueError('Invalid value: %s%s' % (args, kwds))

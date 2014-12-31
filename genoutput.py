@@ -87,22 +87,44 @@ class ConstructPyFile:
 		return functools.reduce(str.__add__, imported,'')
 
 	def construct(self, istest=False):
-		others = [self.result]
-		result = {}
+		""" Construct output .py file from TestCase's classes """
+		result = self._constructInner(istest=istest)
+		return [self.result],  list(result)
+
+	def _constructInner(self, istest=False):
+		""" Helpful method for construct """
 		class_string, method_string = self._makeData(istest)
 		for cls in self.data.keys():
-			data=''
+			'''data=''
 			data += class_string.format(cls)
+			if self.data[cls]
 			result[cls] = ''
 			for method in self.data[cls]:
 				if type(method) != str:
 					data += method_string.format(method.name, self._gen_arguments(method.num_args))
 				else:
 					data += method_string.format(method,self._gen_arguments(0))
-			result[cls] = data
-		return others, result
+			result[cls] = data'''
+			result = self._constructObject(cls, class_string, method_string)
+			if result:
+				yield (cls, self._constructObject(cls, class_string, method_string))
+
+	def _constructObject(self, cls, class_string, method_string):
+		if not self.data[cls]:
+			return 
+		data=''
+		data += class_string.format(cls)
+		#result[cls] = ''
+		for method in self.data[cls]:
+			if type(method) != str:
+				data += method_string.format(method.name, self._gen_arguments(method.num_args))
+			else:
+				data += method_string.format(method,self._gen_arguments(0))
+		return data
+
 
 	def _makeData(self, istest=False):
+		""" Template for output data """
 		class_string = 'class {0}:\n'
 		method_string = '\tdef {0}{1}:\n\t\tpass\n'
 		if istest:

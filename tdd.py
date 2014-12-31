@@ -72,6 +72,9 @@ class Tdd:
 						if parse_result != None:
 							objects.update(parse_result)
 						#If function name not in fucs store with known functions
+						if self.construct != True:
+							""" If construct not in True, doesn't matter how many in checker """
+							checker = 0
 						if subdata.name not in funcs and checker == 0:
 							cand_func = self._parse_test_function(subdata.name)
 							#if cand_func return None
@@ -164,14 +167,19 @@ class Tdd:
 		result = self.ast_parse(targetpath)
 		if not isinstance(result, TddOutput):
 			return 
+
+		#Remove file if exist
+		if outpath and os.path.isfile(outpath):
+			os.remove(outpath)
 		objects = result.objects
 		imported = result.imported
-		data = {k:result.data[k] for k in result.data.keys() if result.data[k] != []}
+		data = result.data
+		#Remove functions, which already exist in objects
 		if self.construct:
-			#TODO: append number arguments of function
-			self._constructObjects(objects, data, outpath)
+			data = {k:result.data[k] for k in result.data.keys() if result.data[k] != []}
+			self._constructObjects(objects, data, outpath, gimported=imported)
 		else:
-			otput = ConstructPyFile(outpath, data, imported=imported)
+			otput = ConstructPyFile(outpath, data, iimported=imported)
 			result = otput.construct()
 			if result == None:
 				raise EmptyResultError("Result not contain any output")
@@ -186,33 +194,34 @@ class Tdd:
 			f = open(cls.lower() + '.py', 'w')
 			f.write(result[cls])
 
-	def _constructObjects(self, objects, data, path):
+	def _constructObjects(self, objects, data, path, gimported=None):
 		if objects == None:
 			self.messages.output("objects from TestCase class not found")
 			return
+		otput = ConstructPyFile(path, data, imported=gimported)
+		result = otput.construct()
+		self._monoliticFile(result, path, 'a')
+		
 		for obj in objects.keys():
 			construct = objects[obj]
 			transform = {construct['name']: construct['funcs']}
 			imported, output = ConstructPyFile(path, transform).construct()
-			self._writeData(output, path)
-			otput = ConstructPyFile(path, data, imported=imported)
-			result = otput.construct()
-			#self._monoliticFile(result, path, 'a')
+			if gimported != None:
+				imported = gimported
+			self._writeData2(output, path)
 
-	#All class in one file
 	def _monoliticFile(self, value, outpath=None, mode='w'):
-		data, result = value
+		""" All classes in one file """
+		imported, result = value
 		firstclassname = outpath
 		if outpath == None:
-			firstclassname = list(result.keys())[0]
-			firstclassname = firstclassname.lower() + '.py'
+			firstclassname = result[0][0].lower() + '.py'
 		f = self._openFile(firstclassname, mode)
-		for d in data:
-			f.write(d)
+		for d in imported: f.write(d)
 		f.close()
-		self._writeData(result, firstclassname)
+		self._writeData2(result, firstclassname)
 
-	def _openFile(self, path, mode='w'):
+	def _openFile(self, path, mode='a'):
 		""" Check if file exist
 			Return his descriptior
 		"""
@@ -227,6 +236,15 @@ class Tdd:
 		f = self._openFile(path)
 		[f.write(result[cls] + '\n') for cls in result.keys()]
 		f.close()
+
+	def _writeData2(self, result, path):
+		"""
+			Experimental writing and will be primary after testing
+		"""
+		f = self._openFile(path)
+		[f.write(data + '\n') for name, data in result]
+		f.close()
+
 
 
 class EmptyResultError(Exception):
