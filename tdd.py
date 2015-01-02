@@ -98,7 +98,8 @@ class Tdd:
 					if isinstance(subdata, ast.Expr):
 						print("Some expression", subdata.value.s)
 			if isinstance(node, ast.Import):
-				imported += list(map(lambda x: 'import ' + x.name, node.names))
+				imported += list(map(lambda x: 'import ' + x.name, 
+					filter(lambda x: x.name != 'unittest', node.names)))
 		return TddOutput(objects, imported, result)
 
 	def _check_exist_function(self, funcname, store):
@@ -159,18 +160,24 @@ class Tdd:
 		if self.comments:
 			return subdata.value.s
 
+	def output(self, targetpath, outpath=None):
+		#Remove file if exist
+		if outpath and os.path.isfile(outpath):
+			os.remove(outpath)
+		if type(targetpath) == str:
+			self._outputInner(targetpath, outpath=outpath)
+		else:
+			for target in targetpath:
+				self._outputInner(target, outpath=outpath)
 
 	#name - folder for output
 	#newfiles - New file for every class
-	def output(self, targetpath, outpath=None):
+	#targetpath can be as list of paths
+	def _outputInner(self, targetpath, outpath=None):
 		#imported, data = self.parse(targetpath)
 		result = self.ast_parse(targetpath)
 		if not isinstance(result, TddOutput):
 			return 
-
-		#Remove file if exist
-		if outpath and os.path.isfile(outpath):
-			os.remove(outpath)
 		objects = result.objects
 		imported = result.imported
 		data = result.data
@@ -179,7 +186,7 @@ class Tdd:
 			data = {k:result.data[k] for k in result.data.keys() if result.data[k] != []}
 			self._constructObjects(objects, data, outpath, gimported=imported)
 		else:
-			otput = ConstructPyFile(outpath, data, iimported=imported)
+			otput = ConstructPyFile(outpath, data, imported=imported)
 			result = otput.construct()
 			if result == None:
 				raise EmptyResultError("Result not contain any output")
@@ -201,7 +208,7 @@ class Tdd:
 		otput = ConstructPyFile(path, data, imported=gimported)
 		result = otput.construct()
 		self._monoliticFile(result, path, 'a')
-		
+
 		for obj in objects.keys():
 			construct = objects[obj]
 			transform = {construct['name']: construct['funcs']}
@@ -210,7 +217,7 @@ class Tdd:
 				imported = gimported
 			self._writeData2(output, path)
 
-	def _monoliticFile(self, value, outpath=None, mode='w'):
+	def _monoliticFile(self, value, outpath=None, mode='a'):
 		""" All classes in one file """
 		imported, result = value
 		firstclassname = outpath

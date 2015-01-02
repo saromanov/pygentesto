@@ -17,14 +17,18 @@ def runGenTestsMany(paths):
 	'''
 	pass
 
-def runTDD(path):
-	#inpfile, outfile = inpotp(path)
-	if len(path) == 2:
+#python3.3 ../pygentesto.py --tdd ../examples/tddex2.py --output fun1.py
+def runTDD(path, outpath, args):
+	if path != None and outpath != None:
 		""" 
 			In case with inpath and outpath
 		"""
+		conf = args.configure
+		t = tdd.Tdd(construct=args.construct, comments=args.comments, configure=conf)
+		t.output(path, outpath=outpath)
+	elif path != None:
 		t = tdd.Tdd()
-		t.output(path[0], outpath=path[1])
+		t.output(path[0])
 
 
 def confLoad():
@@ -57,9 +61,10 @@ def parseArguments():
 		help='Construct methods from TestCase class')
 	parser.add_argument('--configure', dest='configure', nargs='+',
 		help='Load all configuration from json file. Not need to use commad line keys')
+	parser.add_argument('--comments', dest='comments', nargs='+', help='Append comments to output data')
 	args = parser.parse_args()
 	if args.tdd != None:
-		runTDD(args.tdd)
+		runTDD(args.tdd, args.output, args)
 	if args.gentests != None:
 		runGentests(args.gentests, args.output, args)
 	if args.genstetsnum != None:
