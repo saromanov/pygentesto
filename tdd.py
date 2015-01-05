@@ -50,11 +50,15 @@ class Tdd:
 				return json.loads(f.read())
 
 	def ast_parse(self, filename):
-		""" Parse classes with test cases and functions """
+		""" 
+			Parse TestCase classes with test cases and functions 
+			for construct functions
+		"""
 		if not os.path.isfile(filename):
 			raise Exception("File not found")
 		validmethdos = ['setUp']
-		data = open(filename, 'r').read()
+		fdata = open(filename, 'r')
+		data = fdata.read()
 		tree = ast.parse(data)
 		result = {}
 		imported = []
@@ -100,6 +104,7 @@ class Tdd:
 			if isinstance(node, ast.Import):
 				imported += list(map(lambda x: 'import ' + x.name, 
 					filter(lambda x: x.name != 'unittest', node.names)))
+		fdata.close()
 		return TddOutput(objects, imported, result)
 
 	def _check_exist_function(self, funcname, store):
@@ -142,6 +147,7 @@ class Tdd:
 							"""
 							objects.update(self._update_arguments(' ', inner.func.id, 'funcs', objects))
 							checker += 1
+		print("THIS IS CHECK: ", checker)
 		return objects, checker
 
 	def _update_arguments(self, name, data, param, objects):
@@ -184,6 +190,9 @@ class Tdd:
 		#Remove functions, which already exist in objects
 		if self.construct:
 			data = {k:result.data[k] for k in result.data.keys() if result.data[k] != []}
+			if len(data) == 0:
+				self.messages.error("This file not contain valid TestCases",2)
+				return 
 			self._constructObjects(objects, data, outpath, gimported=imported)
 		else:
 			otput = ConstructPyFile(outpath, data, imported=imported)
