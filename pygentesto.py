@@ -1,8 +1,10 @@
 import gentests
+import genoutput
 import tdd
 
 import argparse
 import json
+from iot import mkdir, jsonload
 
 
 def runGentests(path,outfile,args):
@@ -29,6 +31,8 @@ def runTDD(path, outpath, args):
 	elif path != None:
 		t = tdd.Tdd()
 		t.output(path[0])
+	elif args.construct != None:
+		pass
 
 
 def confLoad():
@@ -36,9 +40,20 @@ def confLoad():
 		Load configuration
 		repeatfunc - repeat number of times every function
 	'''
-	data = json.loads(open('conf.json').read())
+	data = jsonload('conf.json')
 	if repeatfunc in data:
 		pass
+
+
+def createFolder(names):
+	""" Names of classes, which will be create """
+	path = names[0]
+	test = 'tests'
+	mkdir(test)
+	'''f = open(test + '/' + path,'w')
+	f.close()'''
+	value = genoutput.ConstructUnitTests({'Doom':[]})
+	value.output(test + '/' + path + '.py')
 
 #python3.3 pygentesto.py  -g pygentesto.py --output value.py
 def parseArguments():
@@ -55,6 +70,7 @@ def parseArguments():
 		const='cim', action='store_const')
 	parser.add_argument('--output', nargs='?', help='set output file')
 	parser.add_argument('-i', dest='imp', help='import current file')
+	parser.add_argument('--create', dest='create', nargs='+', help='Create new file with name of classes')
 
 	#tdd keys
 	parser.add_argument('--construct', dest='construct', nargs='+',
@@ -63,6 +79,8 @@ def parseArguments():
 		help='Load all configuration from json file. Not need to use commad line keys')
 	parser.add_argument('--comments', dest='comments', nargs='+', help='Append comments to output data')
 	args = parser.parse_args()
+	if args.create != None:
+		createFolder(args.create)
 	if args.tdd != None:
 		runTDD(args.tdd, args.output, args)
 	if args.gentests != None:

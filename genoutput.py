@@ -1,7 +1,7 @@
 import functools
 
 class ConstructUnitTests:
-	def __init__(self, classes):
+	def __init__(self, classes, imported=[]):
 		self.data = classes
 		self.result = ''
 		self.result += 'import unittest\n'
@@ -41,8 +41,12 @@ class ConstructUnitTests:
 			#self.result += self._appendData('cfeu', cls[0], cls)
 			'''if self.cfeu:
 				self.result += '\t{0} = {1}()\n'.format(cls[0].lower(), cls)'''
-			for method in self.data[cls]:
-				self.result += '\tdef test_{0}(self):\n\t\tpass\n\n\n\n'.format(method)
+			methdos = self.data[cls]
+			if methdos == []:
+				self.result += '\tpass'
+			else:
+				for method in methdos:
+					self.result += '\tdef test_{0}(self):\n\t\tpass\n\n\n\n'.format(method)
 
 	def _writeDataWComments(self):
 		for cls in self.data.keys():
