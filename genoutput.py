@@ -56,11 +56,12 @@ class ConstructUnitTests:
 				self.result += '\tdef test_{0}(self):\n\t\t"""{1}"""\n\t\tpass\n\n\n\n'.format(name, comment)
 
 	def _setMainData(self):
-		self.result += '\n\n\nif __name__ == "__main__":\n\tunitest.main()\n'
+		self.result += '\n\n\nif __name__ == "__main__":\n\tunittest.main()\n'
 
 	def _writeFile(self, outputfile):
 		f = open(outputfile, 'w')
 		f.write(self.result)
+		f.close()
 
 	def output(self, outputfile):
 		self._writeData()

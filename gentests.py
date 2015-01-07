@@ -3,7 +3,6 @@ import os.path
 import re
 from genoutput import ConstructUnitTests
 
-
 '''
 Algorithm
 1. Read .py file
@@ -53,10 +52,10 @@ class GenTests:
 		"""
 		assert(os.path.isfile(path))
 		return open(self.fname, 'r').readlines()
-
 	def _getNames(self, pattern):
 		"""
 			Get classes and functions
+			TODO: Need rewrite with ast
 		"""
 		data = self._readFile(self.fname)
 		store = Store(self.fname)
@@ -105,7 +104,15 @@ class GenTests:
 
 	def generate(self, methodname, comment):
 		"""
-			Generate test case for method
+			Generate addition test case for the method
+			For example:
+			gen = GenTests(genall=False)
+			gen.generate('example3', 'value if out of range')
+			output:
+			def test_example3(self):
+				'value is out of range'
+				pass
+
 			TODO: Need to append comment
 		"""
 		if self.genall == False:
@@ -140,7 +147,9 @@ class GenTests:
 		else: return self.methods
 
 	def output(self, path, *args, **kwargs):
-		c = ConstructUnitTests(self._result())
+		result = self._result()
+		classes_w_methods = {cl:result[cl] for cl in result if len(result[cl]) > 0}
+		c = ConstructUnitTests(classes_w_methods)
 		if self.classinit_store:
 			c.add_class_for_each_ut()
 		if self.classinit_method:
@@ -167,7 +176,8 @@ class Store:
 			self.values[classname[1]] = []
 
 	def appendMethod(self, methodname):
-		self.method_names.append(methodname[1])
+		if methodname[1] not in self.method_names:
+			self.method_names.append(methodname[1])
 
 	def appendMethodToClass(self, methodname):
 		self.method_names.append(methodname[1])
